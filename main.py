@@ -5,9 +5,9 @@ import tkinter as tk
 import time
 
 # Importando as classes de busca dos arquivos apropriados
-from APS__SEARCHS.binary import BuscaBinaria  # Ajuste o caminho conforme necessário
-from APS__SEARCHS.linear import BuscaLinear    # Ajuste o caminho conforme necessário
-from APS__SEARCHS.btree import ArvoreBinaria   # Ajuste o caminho conforme necessário
+from binary import BuscaBinaria  # Ajuste o caminho conforme necessário
+from linear import BuscaLinear    # Ajuste o caminho conforme necessário
+from btree import ArvoreBinaria   # Ajuste o caminho conforme necessário
 
 class JanelaPrincipal:
     def __init__(self):

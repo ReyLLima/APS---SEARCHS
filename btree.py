@@ -1,58 +1,70 @@
 class ArvoreBinaria:
     def __init__(self, lista_ids):
-        self.raiz = None  # Inicializa a raiz como None
-        for id_imagem in lista_ids:
-            self.inserir(id_imagem)
+        self.lista_ids = lista_ids
+        self.raiz = None
+        self.construir_arvore()
 
-    # Classe interna para representar cada nó da árvore
     class No:
-        def __init__(self, id_imagem):
-            self.id = id_imagem  # ID da imagem
-            self.esquerda = None  # Ponteiro para o filho da esquerda
-            self.direita = None   # Ponteiro para o filho da direita
+        def __init__(self, chave):
+            self.chave = chave
+            self.esquerda = None
+            self.direita = None
 
-    # Método para inserir um ID na árvore
-    def inserir(self, id_imagem):
+    def inserir(self, chave):
         if self.raiz is None:
-            self.raiz = self.No(id_imagem)  # Cria a raiz se não existir
+            self.raiz = self.No(chave)
         else:
-            self._inserir_recursivo(self.raiz, id_imagem)
+            self._inserir_recursivo(self.raiz, chave)
 
-    # Método recursivo para inserir um ID
-    def _inserir_recursivo(self, no, id_imagem):
-        if id_imagem < no.id:
+    def _inserir_recursivo(self, no, chave):
+        if chave < no.chave:
             if no.esquerda is None:
-                no.esquerda = self.No(id_imagem)  # Insere à esquerda
+                no.esquerda = self.No(chave)
             else:
-                self._inserir_recursivo(no.esquerda, id_imagem)  # Continua a inserção
+                self._inserir_recursivo(no.esquerda, chave)
         else:
             if no.direita is None:
-                no.direita = self.No(id_imagem)  # Insere à direita
+                no.direita = self.No(chave)
             else:
-                self._inserir_recursivo(no.direita, id_imagem)  # Continua a inserção
+                self._inserir_recursivo(no.direita, chave)
 
-    # Método para buscar um ID na árvore
+    def construir_arvore(self):
+        for id_imagem in self.lista_ids:
+            self.inserir(id_imagem)
+
     def buscar(self, id_imagem):
+        print(f"Buscando imagem com ID (Árvore Binária): {id_imagem}")
         return self._buscar_recursivo(self.raiz, id_imagem)
 
-    # Método recursivo para buscar um ID
-    def _buscar_recursivo(self, no, id_imagem):
+    def _buscar_recursivo(self, no, chave):
         if no is None:
-            return None  # Retorna None se não encontrar
-        if no.id == id_imagem:
-            return no.id  # Retorna o ID encontrado
-        elif id_imagem < no.id:
-            return self._buscar_recursivo(no.esquerda, id_imagem)  # Busca à esquerda
+            return None
+
+        if chave == no.chave:
+            return self.buscar_imagem_no_bd(chave)  # Retorna a imagem do banco de dados
+        elif chave < no.chave:
+            return self._buscar_recursivo(no.esquerda, chave)
         else:
-            return self._buscar_recursivo(no.direita, id_imagem)  # Busca à direita
+            return self._buscar_recursivo(no.direita, chave)
 
-# Exemplo de uso da classe
-if __name__ == "__main__":
-    # Exemplo de IDs já existentes na árvore
-    lista_ids = [5, 3, 8, 1, 4, 7, 9]
-    arvore = ArvoreBinaria(lista_ids)
-
-    # Exemplo de buscas
-    print("Busca por 4:", arvore.buscar(4))  # Deve retornar 4
-    print("Busca por 10:", arvore.buscar(10))  # Deve retornar None
-    print("Busca por 1:", arvore.buscar(1))  # Deve retornar 1
+    def buscar_imagem_no_bd(self, id_imagem):
+        import mysql.connector
+        try:
+            conexao = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="admin",
+                database="aps"
+            )
+            cursor = conexao.cursor()
+            query = "SELECT imagem_blob FROM tabela_imagens WHERE id = %s"
+            cursor.execute(query, (id_imagem,))
+            resultado = cursor.fetchone()
+            return resultado[0] if resultado else None
+        except mysql.connector.Error as err:
+            print(f"Erro: {err}")
+            return None
+        finally:
+            if conexao.is_connected():
+                cursor.close()
+                conexao.close()
