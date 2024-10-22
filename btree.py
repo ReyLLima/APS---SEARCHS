@@ -45,3 +45,14 @@ class ArvoreBinaria:
             return self._buscar_recursivo(no.esquerda, id_imagem)  # Busca à esquerda
         else:
             return self._buscar_recursivo(no.direita, id_imagem)  # Busca à direita
+
+# Exemplo de uso da classe
+if __name__ == "__main__":
+    # Exemplo de IDs já existentes na árvore
+    lista_ids = [5, 3, 8, 1, 4, 7, 9]
+    arvore = ArvoreBinaria(lista_ids)
+
+    # Exemplo de buscas
+    print("Busca por 4:", arvore.buscar(4))  # Deve retornar 4
+    print("Busca por 10:", arvore.buscar(10))  # Deve retornar None
+    print("Busca por 1:", arvore.buscar(1))  # Deve retornar 1

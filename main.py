@@ -1,8 +1,13 @@
-import io  # Adicione isso ao seu import
+import io
 from PIL import Image, ImageTk
-import mysql.connector  # Supondo que seu banco seja MySQL
+import mysql.connector
 import tkinter as tk
 import time
+
+# Importando as classes de busca dos arquivos apropriados
+from APS__SEARCHS.binary import BuscaBinaria  # Ajuste o caminho conforme necessário
+from APS__SEARCHS.linear import BuscaLinear    # Ajuste o caminho conforme necessário
+from APS__SEARCHS.btree import ArvoreBinaria   # Ajuste o caminho conforme necessário
 
 class JanelaPrincipal:
     def __init__(self):
@@ -11,12 +16,12 @@ class JanelaPrincipal:
         self.window.attributes('-fullscreen', True)
         self.window.configure(bg="lightblue")
 
-        self.label = tk.Label(self.window, text="Searchs and Sorts - APS", font=("Arial", 24), bg="lightblue")
+        self.label = tk.Label(self.window, text="Digite a ID da imagem a ser buscada abaixo:", font=("Arial", 24), bg="lightblue")
         self.label.pack(pady=40)
 
         # Entrada de ID
         self.entry = tk.Entry(self.window, font=("Arial", 20))
-        self.entry.insert(0, "Entre com a ID:")  # Texto padrão
+        self.entry.insert(0, "")  # Texto padrão
         self.entry.pack(pady=10)
 
         # Frame para alinhar os botões
@@ -32,8 +37,9 @@ class JanelaPrincipal:
         self.botao_tela3 = tk.Button(botao_frame, text="Busca por árvore", font=("Arial", 14), command=self.abrir_tela_3)
         self.botao_tela3.grid(row=0, column=2, padx=10)
 
-    def buscar_imagem_no_bd(self, id_imagem):
-        # Exemplo de função de conexão com o banco de dados e busca
+    def buscar_imagem(self, busca_func):
+        # Função para buscar a imagem no banco de dados
+        id_imagem = self.entry.get()
         try:
             conexao = mysql.connector.connect(
                 host="localhost",
@@ -45,33 +51,29 @@ class JanelaPrincipal:
             query = "SELECT imagem_blob FROM tabela_imagens WHERE id = %s"
             cursor.execute(query, (id_imagem,))
             resultado = cursor.fetchone()
-
-            if resultado:
-                return resultado[0]  # Retorna o blob da imagem
-            else:
-                print("Imagem não encontrada.")
-                return None
+            return resultado[0] if resultado else None
         except mysql.connector.Error as err:
             print(f"Erro: {err}")
+            return None
         finally:
             if conexao.is_connected():
                 cursor.close()
                 conexao.close()
 
-    def abrir_tela(self, busca_func):
+    def abrir_tela(self, busca_class):
         njanela = tk.Toplevel(self.window)
         njanela.title("Resultado da Busca")
         njanela.geometry("800x600")
         njanela.configure(bg="lightgrey")
 
-        # Obter a ID da entrada
-        id_imagem = self.entry.get()
-
         # Tempo inicial da busca
         start_time = time.time()
 
-        # Executar a função de busca
-        imagem_blob = busca_func(id_imagem)
+        # Criar a instância da classe de busca
+        busca = busca_class()
+
+        # Executar a busca
+        imagem_blob = busca.buscar(self.entry.get())  # Aqui você deve garantir que a função 'buscar' exista na sua classe
 
         # Tempo final da busca
         end_time = time.time()
@@ -96,13 +98,13 @@ class JanelaPrincipal:
             tk.Label(njanela, text="Imagem não encontrada.", font=("Arial", 14), bg="lightgrey").pack(pady=10)
 
     def abrir_tela_1(self):
-        self.abrir_tela(self.buscar_imagem_no_bd)  # Assumindo que é a função de busca binária
+        self.abrir_tela(BuscaBinaria)  # Chama a classe de busca binária
 
     def abrir_tela_2(self):
-        self.abrir_tela(self.buscar_imagem_no_bd)  # Assumindo que é a função de busca linear
+        self.abrir_tela(BuscaLinear)  # Chama a classe de busca linear
 
     def abrir_tela_3(self):
-        self.abrir_tela(self.buscar_imagem_no_bd)  # Outra função de busca que você definir
+        self.abrir_tela(ArvoreBinaria)  # Chama a classe de busca por árvore
 
     def run(self):
         self.window.mainloop()
