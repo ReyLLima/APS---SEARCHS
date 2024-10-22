@@ -7,8 +7,8 @@ class JanelaPrincipal:
     def __init__(self):
         # Criando a janela principal
         self.window = tk.Tk()
-        self.window.title("Janela Principal")
-        self.window.geometry("400x300")
+        self.window.title("APS")
+        self.window.geometry("1920x1080")
         self.window.configure(bg="lightblue")
 
         # Adicionando um rótulo (label)
