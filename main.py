@@ -1,7 +1,8 @@
-import tkinter as tk
+import io  # Adicione isso ao seu import
 from PIL import Image, ImageTk
-import time
 import mysql.connector  # Supondo que seu banco seja MySQL
+import tkinter as tk
+import time
 
 class JanelaPrincipal:
     def __init__(self):
@@ -10,7 +11,7 @@ class JanelaPrincipal:
         self.window.attributes('-fullscreen', True)
         self.window.configure(bg="lightblue")
 
-        self.label = tk.Label(self.window, text="Bem-vindo ao Testador de Buscas!", font=("Arial", 24), bg="lightblue")
+        self.label = tk.Label(self.window, text="Searchs and Sorts - APS", font=("Arial", 24), bg="lightblue")
         self.label.pack(pady=40)
 
         # Entrada de ID
@@ -22,13 +23,13 @@ class JanelaPrincipal:
         botao_frame = tk.Frame(self.window, bg="lightblue")
         botao_frame.pack(pady=20)
 
-        self.botao_tela1 = tk.Button(botao_frame, text="Abrir Tela 1", font=("Arial", 14), command=self.abrir_tela_1)
+        self.botao_tela1 = tk.Button(botao_frame, text="Busca binária", font=("Arial", 14), command=self.abrir_tela_1)
         self.botao_tela1.grid(row=0, column=0, padx=10)
 
-        self.botao_tela2 = tk.Button(botao_frame, text="Abrir Tela 2", font=("Arial", 14), command=self.abrir_tela_2)
+        self.botao_tela2 = tk.Button(botao_frame, text="Busca linear", font=("Arial", 14), command=self.abrir_tela_2)
         self.botao_tela2.grid(row=0, column=1, padx=10)
 
-        self.botao_tela3 = tk.Button(botao_frame, text="Abrir Tela 3", font=("Arial", 14), command=self.abrir_tela_3)
+        self.botao_tela3 = tk.Button(botao_frame, text="Busca por árvore", font=("Arial", 14), command=self.abrir_tela_3)
         self.botao_tela3.grid(row=0, column=2, padx=10)
 
     def buscar_imagem_no_bd(self, id_imagem):
@@ -82,8 +83,10 @@ class JanelaPrincipal:
 
         # Exibir a imagem
         if imagem_blob:
-            image = Image.open(imagem_blob)
-            image = image.resize((300, 300))  # Redimensionar conforme necessário
+            # Criar um objeto BytesIO a partir do BLOB
+            imagem_bytes = io.BytesIO(imagem_blob)
+            image = Image.open(imagem_bytes)  # Abrir a imagem a partir do objeto BytesIO
+            image = image.resize((400, 400))  # Redimensionar conforme necessário
             photo = ImageTk.PhotoImage(image)
 
             img_label = tk.Label(njanela, image=photo)
