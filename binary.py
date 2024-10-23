@@ -1,8 +1,14 @@
 class BuscaBinaria:
-    def __init__(self, ids):
-        self.ids = ids  # Lista de IDs a ser usada na busca
+    def __init__(self):
+        self.ids = list(range(1, 5001))  # Lista de IDs de 1 a 5000
 
     def buscar(self, id_imagem):
+        try:
+            id_imagem = int(id_imagem)  # Converte a entrada para inteiro
+        except ValueError:
+            print("ID inválido. Por favor, insira um número inteiro.")
+            return None
+
         print(f"Buscando imagem com ID (Busca Binária): {id_imagem}")
         # Realiza a busca binária
         esquerda = 0
@@ -18,6 +24,7 @@ class BuscaBinaria:
                 direita = meio - 1
 
         return None  # Retorna None se não encontrar
+
 
     def buscar_imagem_no_bd(self, id_imagem):
         import mysql.connector

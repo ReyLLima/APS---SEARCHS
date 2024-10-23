@@ -1,6 +1,6 @@
 class ArvoreBinaria:
-    def __init__(self, lista_ids):
-        self.lista_ids = lista_ids
+    def __init__(self):
+        self.lista_ids = list(range(1, 5001))
         self.raiz = None
         self.construir_arvore()
 
@@ -11,6 +11,8 @@ class ArvoreBinaria:
             self.direita = None
 
     def inserir(self, chave):
+        if not isinstance(chave, int):
+            raise ValueError("A chave deve ser um inteiro.")
         if self.raiz is None:
             self.raiz = self.No(chave)
         else:
@@ -22,17 +24,20 @@ class ArvoreBinaria:
                 no.esquerda = self.No(chave)
             else:
                 self._inserir_recursivo(no.esquerda, chave)
-        else:
+        elif chave > no.chave:  # Evita duplicatas
             if no.direita is None:
                 no.direita = self.No(chave)
             else:
                 self._inserir_recursivo(no.direita, chave)
+        # Se a chave for igual, não faz nada
 
     def construir_arvore(self):
         for id_imagem in self.lista_ids:
             self.inserir(id_imagem)
 
     def buscar(self, id_imagem):
+        if not isinstance(id_imagem, int):
+            raise ValueError("O ID da imagem deve ser um inteiro.")
         print(f"Buscando imagem com ID (Árvore Binária): {id_imagem}")
         return self._buscar_recursivo(self.raiz, id_imagem)
 
