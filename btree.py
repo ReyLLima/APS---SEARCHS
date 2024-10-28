@@ -1,8 +1,8 @@
 class ArvoreBinaria:
     def __init__(self):
-        self.lista_ids = list(range(1, 5001))
+        self.lista_ids = list(range(1, 5001))  # Números de 1 a 5000
         self.raiz = None
-        self.construir_arvore()
+        self.construir_arvore_balanceada(self.lista_ids)
 
     class No:
         def __init__(self, chave):
@@ -29,15 +29,22 @@ class ArvoreBinaria:
                 no.direita = self.No(chave)
             else:
                 self._inserir_recursivo(no.direita, chave)
-        # Se a chave for igual, não faz nada
 
-    def construir_arvore(self):
-        for id_imagem in self.lista_ids:
-            self.inserir(id_imagem)
+    def construir_arvore_balanceada(self, lista_ids):
+        if not lista_ids:
+            return None
+        meio = len(lista_ids) // 2
+        self.inserir(lista_ids[meio])
+        self.construir_arvore_balanceada(lista_ids[:meio])  # Insere à esquerda
+        self.construir_arvore_balanceada(lista_ids[meio+1:])  # Insere à direita
 
     def buscar(self, id_imagem):
-        if not isinstance(id_imagem, int):
-            raise ValueError("O ID da imagem deve ser um inteiro.")
+        # Verificar se a entrada é um número e convertê-la
+        try:
+            id_imagem = int(id_imagem)  # Converte a entrada do usuário para inteiro
+        except ValueError:
+            raise ValueError("O ID da imagem deve ser um número inteiro válido.")
+
         print(f"Buscando imagem com ID (Árvore Binária): {id_imagem}")
         return self._buscar_recursivo(self.raiz, id_imagem)
 
@@ -46,7 +53,8 @@ class ArvoreBinaria:
             return None
 
         if chave == no.chave:
-            return self.buscar_imagem_no_bd(chave)  # Retorna a imagem do banco de dados
+            print(f"ID {chave} encontrado na árvore binária. Buscando no banco de dados...")
+            return self.buscar_imagem_no_bd(chave)  # Busca a imagem no banco de dados
         elif chave < no.chave:
             return self._buscar_recursivo(no.esquerda, chave)
         else:
@@ -65,9 +73,14 @@ class ArvoreBinaria:
             query = "SELECT imagem_blob FROM tabela_imagens WHERE id = %s"
             cursor.execute(query, (id_imagem,))
             resultado = cursor.fetchone()
-            return resultado[0] if resultado else None
+            if resultado:
+                print(f"Imagem com ID {id_imagem} encontrada no banco de dados.")
+                return resultado[0]  # Retorna a imagem como BLOB
+            else:
+                print(f"Imagem com ID {id_imagem} não encontrada no banco de dados.")
+                return None
         except mysql.connector.Error as err:
-            print(f"Erro: {err}")
+            print(f"Erro de conexão ao banco de dados: {err}")
             return None
         finally:
             if conexao.is_connected():
