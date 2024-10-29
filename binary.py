@@ -1,6 +1,29 @@
 class BuscaBinaria:
     def __init__(self):
-        self.ids = list(range(1, 5001))  # Lista de IDs de 1 a 5000
+        self.ids = self.carregar_ids_do_bd()  # Carrega os IDs diretamente do banco de dados
+
+    def carregar_ids_do_bd(self):
+        # Função para carregar os IDs das imagens existentes no banco de dados
+        import mysql.connector
+        try:
+            conexao = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="admin",
+                database="aps"
+            )
+            cursor = conexao.cursor()
+            query = "SELECT id FROM tabela_imagens"
+            cursor.execute(query)
+            resultado = cursor.fetchall()
+            return [row[0] for row in resultado]  # Retorna uma lista de IDs
+        except mysql.connector.Error as err:
+            print(f"Erro ao carregar IDs do banco de dados: {err}")
+            return []
+        finally:
+            if conexao.is_connected():
+                cursor.close()
+                conexao.close()
 
     def buscar(self, id_imagem):
         try:
@@ -24,7 +47,6 @@ class BuscaBinaria:
                 direita = meio - 1
 
         return None  # Retorna None se não encontrar
-
 
     def buscar_imagem_no_bd(self, id_imagem):
         import mysql.connector

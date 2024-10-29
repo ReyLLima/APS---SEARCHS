@@ -2,11 +2,12 @@ import io
 from PIL import Image, ImageTk
 import mysql.connector
 import tkinter as tk
+from tkinter import filedialog, messagebox  # Para abrir o seletor de arquivos
 import time
 
 # Importando as classes de busca dos arquivos apropriados
 from binary import BuscaBinaria  # Ajuste o caminho conforme necessário
-from linear import BuscaLinear    # Ajuste o caminho conforme necessário
+from sort import OrdenacaoSelecao    # Ajuste o caminho conforme necessário
 from btree import ArvoreBinaria   # Ajuste o caminho conforme necessário
 
 class JanelaPrincipal:
@@ -19,10 +20,14 @@ class JanelaPrincipal:
         self.label = tk.Label(self.window, text="Digite a ID da imagem a ser buscada abaixo:", font=("Arial", 24), bg="lightblue")
         self.label.pack(pady=40)
 
-        # Entrada de ID
-        self.entry = tk.Entry(self.window, font=("Arial", 20))
-        self.entry.insert(0, "")  # Texto padrão
-        self.entry.pack(pady=10)
+        # Entrada de ID para busca
+        self.entry_busca = tk.Entry(self.window, font=("Arial", 20))
+        self.entry_busca.insert(0, "")  # Texto padrão
+        self.entry_busca.pack(pady=10)
+
+        # Botão para carregar nova imagem
+        self.botao_carregar = tk.Button(self.window, text="Carregar Nova Imagem", font=("Arial", 14), command=self.carregar_imagem)
+        self.botao_carregar.pack(pady=10)
 
         # Frame para alinhar os botões
         botao_frame = tk.Frame(self.window, bg="lightblue")
@@ -31,15 +36,49 @@ class JanelaPrincipal:
         self.botao_tela1 = tk.Button(botao_frame, text="Busca binária", font=("Arial", 14), command=self.abrir_tela_1)
         self.botao_tela1.grid(row=0, column=0, padx=10)
 
-        self.botao_tela2 = tk.Button(botao_frame, text="Busca linear", font=("Arial", 14), command=self.abrir_tela_2)
+        self.botao_tela2 = tk.Button(botao_frame, text="Ordenação por seleção", font=("Arial", 14), command=self.abrir_tela_2)
         self.botao_tela2.grid(row=0, column=1, padx=10)
 
         self.botao_tela3 = tk.Button(botao_frame, text="Busca por árvore", font=("Arial", 14), command=self.abrir_tela_3)
         self.botao_tela3.grid(row=0, column=2, padx=10)
 
+    def carregar_imagem(self):
+        # Função para carregar uma imagem do sistema e inseri-la no banco de dados
+        # Abrir um seletor de arquivos para escolher a imagem
+        caminho_imagem = filedialog.askopenfilename(title="Escolha uma imagem", filetypes=[("Imagens", "*.jpg;*.jpeg;*.png")])
+        if not caminho_imagem:
+            return  # Se o usuário cancelar, não faz nada
+
+        try:
+            # Abrir a imagem e convertê-la em binário
+            with open(caminho_imagem, "rb") as file:
+                imagem_blob = file.read()
+
+            # Inserir a imagem no banco de dados (ID será gerado automaticamente)
+            conexao = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="admin",
+                database="aps"
+            )
+            cursor = conexao.cursor()
+            query = "INSERT INTO tabela_imagens (imagem_blob) VALUES (%s)"
+            cursor.execute(query, (imagem_blob,))
+            conexao.commit()
+
+            messagebox.showinfo("Sucesso", "Imagem carregada com sucesso!")
+        
+        except mysql.connector.Error as err:
+            messagebox.showerror("Erro", f"Erro ao inserir imagem no banco de dados: {err}")
+        
+        finally:
+            if conexao.is_connected():
+                cursor.close()
+                conexao.close()
+
     def buscar_imagem(self, busca_func):
         # Função para buscar a imagem no banco de dados
-        id_imagem = self.entry.get()
+        id_imagem = self.entry_busca.get()  # Aqui usamos o campo de busca
         try:
             conexao = mysql.connector.connect(
                 host="localhost",
@@ -73,7 +112,7 @@ class JanelaPrincipal:
         busca = busca_class()
 
         # Executar a busca
-        imagem_blob = busca.buscar(self.entry.get())  # Aqui você deve garantir que a função 'buscar' exista na sua classe
+        imagem_blob = busca.buscar(self.entry_busca.get())  # Agora usamos a entrada para busca
 
         # Tempo final da busca
         end_time = time.time()
@@ -101,7 +140,33 @@ class JanelaPrincipal:
         self.abrir_tela(BuscaBinaria)  # Chama a classe de busca binária
 
     def abrir_tela_2(self):
-        self.abrir_tela(BuscaLinear)  # Chama a classe de busca linear
+        njanela = tk.Toplevel(self.window)
+        njanela.title("Ordenação por Seleção")
+        njanela.geometry("800x600")
+        njanela.configure(bg="lightgrey")
+
+        # Criar a instância da classe de ordenação por seleção
+        ordenacao = OrdenacaoSelecao()
+        
+        # Medir o tempo de ordenação e obter IDs ordenados
+        tempo_total, ids_ordenados = ordenacao.executar()
+
+        # Exibir o tempo da ordenação
+        tempo_label = tk.Label(njanela, text=f"Tempo da ordenação: {tempo_total:.4f} segundos", font=("Arial", 14), bg="lightgrey")
+        tempo_label.pack(pady=10)
+
+        # Criar um widget Text para exibir os IDs
+        text_widget = tk.Text(njanela, font=("Arial", 8), wrap=tk.WORD, bg="lightgrey")
+        text_widget.pack(expand=True, fill='both', padx=10, pady=10)
+
+        # Inserir os IDs ordenados no widget Text
+        text_widget.insert(tk.END, "IDs ordenados:\n")
+        text_widget.insert(tk.END, ', '.join(map(str, ids_ordenados)))
+
+        # Desabilitar edição no widget Text
+        text_widget.config(state=tk.DISABLED)
+
+
 
     def abrir_tela_3(self):
         self.abrir_tela(ArvoreBinaria)  # Chama a classe de busca por árvore
