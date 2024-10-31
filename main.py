@@ -2,7 +2,7 @@ import io
 from PIL import Image, ImageTk
 import mysql.connector
 import tkinter as tk
-from tkinter import filedialog, messagebox  # Para abrir o seletor de arquivos
+from tkinter import filedialog, messagebox
 import time
 
 # Importando as classes de busca dos arquivos apropriados
@@ -29,7 +29,15 @@ class JanelaPrincipal:
         self.botao_carregar = tk.Button(self.window, text="Carregar Nova Imagem", font=("Arial", 14), command=self.carregar_imagem)
         self.botao_carregar.pack(pady=10)
 
-        # Frame para alinhar os botões
+        # Botão para atualizar imagem
+        self.botao_update = tk.Button(self.window, text="Atualizar Imagem", font=("Arial", 14), command=self.atualizar_imagem)
+        self.botao_update.pack(pady=10)
+
+        # Botão para deletar imagem
+        self.botao_deletar = tk.Button(self.window, text="Deletar Imagem", font=("Arial", 14), command=self.deletar_imagem)
+        self.botao_deletar.pack(pady=10)
+
+        # Frame para alinhar os botões de busca e ordenação
         botao_frame = tk.Frame(self.window, bg="lightblue")
         botao_frame.pack(pady=20)
 
@@ -43,18 +51,13 @@ class JanelaPrincipal:
         self.botao_tela3.grid(row=0, column=2, padx=10)
 
     def carregar_imagem(self):
-        # Função para carregar uma imagem do sistema e inseri-la no banco de dados
-        # Abrir um seletor de arquivos para escolher a imagem
+        # Função para carregar uma nova imagem no banco de dados
         caminho_imagem = filedialog.askopenfilename(title="Escolha uma imagem", filetypes=[("Imagens", "*.jpg;*.jpeg;*.png")])
         if not caminho_imagem:
-            return  # Se o usuário cancelar, não faz nada
-
+            return
         try:
-            # Abrir a imagem e convertê-la em binário
             with open(caminho_imagem, "rb") as file:
                 imagem_blob = file.read()
-
-            # Inserir a imagem no banco de dados (ID será gerado automaticamente)
             conexao = mysql.connector.connect(
                 host="localhost",
                 user="root",
@@ -65,20 +68,47 @@ class JanelaPrincipal:
             query = "INSERT INTO tabela_imagens (imagem_blob) VALUES (%s)"
             cursor.execute(query, (imagem_blob,))
             conexao.commit()
-
             messagebox.showinfo("Sucesso", "Imagem carregada com sucesso!")
-        
         except mysql.connector.Error as err:
             messagebox.showerror("Erro", f"Erro ao inserir imagem no banco de dados: {err}")
-        
         finally:
             if conexao.is_connected():
                 cursor.close()
                 conexao.close()
 
-    def buscar_imagem(self, busca_func):
-        # Função para buscar a imagem no banco de dados
-        id_imagem = self.entry_busca.get()  # Aqui usamos o campo de busca
+    def atualizar_imagem(self):
+        # Função para atualizar a imagem de um ID específico
+        id_imagem = self.entry_busca.get()
+        caminho_imagem = filedialog.askopenfilename(title="Escolha uma nova imagem", filetypes=[("Imagens", "*.jpg;*.jpeg;*.png")])
+        if not caminho_imagem:
+            return
+        try:
+            with open(caminho_imagem, "rb") as file:
+                imagem_blob = file.read()
+            conexao = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="admin",
+                database="aps"
+            )
+            cursor = conexao.cursor()
+            query = "UPDATE tabela_imagens SET imagem_blob = %s WHERE id = %s"
+            cursor.execute(query, (imagem_blob, id_imagem))
+            conexao.commit()
+            if cursor.rowcount > 0:
+                messagebox.showinfo("Sucesso", f"Imagem do ID {id_imagem} atualizada com sucesso!")
+            else:
+                messagebox.showwarning("Aviso", f"ID {id_imagem} não encontrado.")
+        except mysql.connector.Error as err:
+            messagebox.showerror("Erro", f"Erro ao atualizar imagem no banco de dados: {err}")
+        finally:
+            if conexao.is_connected():
+                cursor.close()
+                conexao.close()
+
+    def deletar_imagem(self):
+        # Função para deletar a imagem de um ID específico
+        id_imagem = self.entry_busca.get()
         try:
             conexao = mysql.connector.connect(
                 host="localhost",
@@ -87,13 +117,15 @@ class JanelaPrincipal:
                 database="aps"
             )
             cursor = conexao.cursor()
-            query = "SELECT imagem_blob FROM tabela_imagens WHERE id = %s"
+            query = "DELETE FROM tabela_imagens WHERE id = %s"
             cursor.execute(query, (id_imagem,))
-            resultado = cursor.fetchone()
-            return resultado[0] if resultado else None
+            conexao.commit()
+            if cursor.rowcount > 0:
+                messagebox.showinfo("Sucesso", f"Imagem do ID {id_imagem} deletada com sucesso!")
+            else:
+                messagebox.showwarning("Aviso", f"ID {id_imagem} não encontrado.")
         except mysql.connector.Error as err:
-            print(f"Erro: {err}")
-            return None
+            messagebox.showerror("Erro", f"Erro ao deletar imagem no banco de dados: {err}")
         finally:
             if conexao.is_connected():
                 cursor.close()
@@ -166,14 +198,12 @@ class JanelaPrincipal:
         # Desabilitar edição no widget Text
         text_widget.config(state=tk.DISABLED)
 
-
-
     def abrir_tela_3(self):
         self.abrir_tela(ArvoreBinaria)  # Chama a classe de busca por árvore
 
     def run(self):
         self.window.mainloop()
 
-if __name__ == "__main__":
-    janela_principal = JanelaPrincipal()
-    janela_principal.run()
+# Executar a interface gráfica
+app = JanelaPrincipal()
+app.run()
